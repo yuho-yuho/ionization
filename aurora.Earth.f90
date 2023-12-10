@@ -255,6 +255,41 @@ subroutine aurora(iBlock)
 
            enddo
 
+           !!----------------------------------------------------------
+           !! Update the ionization profile - Mainly AuroralBulkIonRate
+
+           !! Maxwellian Spectrum Using (Fang2008)
+           if (useFang2008) then
+
+              if (.not. UseAEPMSpectra) then
+
+                 ! H, Scale Height [cm], Eq. (3)
+                 do k=1,nAlts
+                    ScaleHeight = -Temperature(j,i,k,iBlock)*TempUnit(j,i,k) &
+                         * Boltzmanns_Constant/&
+                         (Gravity_GB(j,i,k,iBlock)*MeanMajorMass(j,i,k))*100
+
+                     ! y, Eq. (4)
+                     ! Rho is in the unit of kg/m3, so a factor of 1e-3
+                     ! is needed; rho [kg/m3 -> g/cm3]
+                     yyy = 1/(av_kev/2.0) * (rho(j,i,k,iBlock) * 1.e-3 * & 
+                         ScaleHeight / (4.e-6))**0.606
+                     ! f(y), Eq. (5)
+                     call cion(yyy,fff,av_kev/2.0)
+                     ! qtot, Eq. (2)
+                     ! GITM ion rate is in unit of m3/s, so a fator of 1e6 & is needed
+                     qqq = eflx_ergs*(6.2415e8)*fff/(2*35.e-3*scaleHeight)*1.e6
+
+                     AuroralBulkIonRate(j,i,k) = qqq
+                     AuroralBulkIonRate1(j,i,k) = qqq
+
+                  end do
+               end if ! Maxwellian case 
+            end if 
+
+
+              
+
         endif
 
      enddo
